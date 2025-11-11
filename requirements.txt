@@ -1,0 +1,17 @@
+# Data manipulation and analysis
+polars>=0.20.0
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Machine Learning
+scikit-learn>=1.3.0
+xgboost>=2.0.0
+
+# Visualization
+plotly>=5.18.0
+
+# Interface
+gradio>=4.0.0
+
+# Model persistence (built-in, but listed for clarity)
+# pickle - included in Python standard library
