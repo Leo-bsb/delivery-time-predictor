@@ -1,14 +1,27 @@
-### 🍕 Delivery Time Predictor
-#### Friendly XGBoost model + Gradio demo to estimate food delivery time (link to live demo below)
+# 🍕 Delivery Time Predictor
+
+![Python](https://img.shields.io/badge/python-3.8%2B-blue?logo=python&style=flat-square)
+![XGBoost](https://img.shields.io/badge/xgboost-1.6-orange?logo=xgboost&style=flat-square)
+![Gradio](https://img.shields.io/badge/gradio-3.20-purple?style=flat-square)
+![License: MIT](https://img.shields.io/badge/license-MIT-green?style=flat-square)
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square) 
+![Last commit](https://img.shields.io/github/last-commit/leo-bsb/delivery-time-predictor?style=flat-square)
+
+### Friendly XGBoost model + Gradio demo to estimate food delivery time (link to live demo below)
 
 - Live demo: [Try the app on Hugging Face Spaces](https://leo-bsb-delivery-time-predictor.hf.space/)  
 - Short purpose: quick, explainable estimates of delivery time (minutes) from order & courier features — great for demos, prototyping logistic UIs, or lightweight decision support.
 
+⚠️ Note: This application is currently in Brazilian Portuguese (Português-BR). All inputs, outputs, and UI elements are in Portuguese.
+
 #### Quick summary (what this repo contains)
-- Model: XGBoost regressor trained on a food-delivery dataset.
+- Model: XGBoost regressor trained with the [Food Delivery Time Prediction dataset](https://www.kaggle.com/datasets/denkuznetz/food-delivery-time-prediction).
 - Serving/UI: Gradio app (app.py) with interactive inputs, plots, and example cases.
 - Artifacts: saved model file `delivery_model.pkl` (contains model, encoders, metrics).
 - Visuals in the app: feature importance, predicted vs real, and error distribution.
+
+![Uploading Captura de tela de 2025-11-12 01-27-46.png…]()
+
 
 #### Dataset & features (pipeline overview)
 - Main input columns used:
