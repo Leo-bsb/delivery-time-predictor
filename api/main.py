@@ -3,7 +3,7 @@ import numpy as np
 from fastapi import FastAPI
 from pydantic import BaseModel
 import uvicorn
-import pandas as pd # Necessário para o XGBoost mesmo com numpy
+import pandas as pd # noqa: F401
 
 # --- Configuração do App ---
 app = FastAPI(

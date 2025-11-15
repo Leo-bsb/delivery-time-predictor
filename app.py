@@ -131,7 +131,7 @@ mae_test = mean_absolute_error(y_test, y_pred_test)
 rmse_test = np.sqrt(mean_squared_error(y_test, y_pred_test))
 r2_test = r2_score(y_test, y_pred_test)
 
-print(f"\n📊 MÉTRICAS DO MODELO:")
+print("\n📊 MÉTRICAS DO MODELO:")
 print(f"   MAE Treino: {mae_train:.2f} min")
 print(f"   MAE Teste: {mae_test:.2f} min")
 print(f"   RMSE Teste: {rmse_test:.2f} min")
