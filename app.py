@@ -14,8 +14,7 @@ import pickle
 # 1. CARREGAMENTO E EXPLORAÇÃO DOS DADOS
 # ============================================
 
-# Carrega o dataset (ajuste o caminho)
-df = pl.read_csv('/home/leonardo/scripts/venv/delivery-predictor/Food_Delivery_Times.csv')
+df = pl.read_csv('Food_Delivery_Times.csv')
 
 print("📊 Shape do dataset:", df.shape)
 print("\n🔍 Primeiras linhas:")
@@ -25,24 +24,23 @@ print(df.describe())
 print("\n❌ Valores nulos:")
 print(df.null_count())
 
-# Imputação de 'Courier_Experience_yrs' por tipo de veículo
 df = df.with_columns(
-    pl.when(pl.col('Courier_Experience_yrs').is_null() & (pl.col('Vehicle_Type') == 'Motorcycle')).then(pl.lit(6.0))
-     .when(pl.col('Courier_Experience_yrs').is_null() & (pl.col('Vehicle_Type') == 'Bike')).then(pl.lit(4.5))
-     .when(pl.col('Courier_Experience_yrs').is_null() & (pl.col('Vehicle_Type') == 'Scooter')).then(pl.lit(3.0))
-     .otherwise(pl.col('Courier_Experience_yrs'))
-     .alias('Courier_Experience_yrs')
+    pl.col('Courier_Experience_yrs').fill_null(
+        pl.when(pl.col('Vehicle_Type') == 'Motorcycle').then(6.0)
+          .when(pl.col('Vehicle_Type') == 'Bike').then(4.5)
+          .when(pl.col('Vehicle_Type') == 'Scooter').then(3.0)
+          .otherwise(pl.col('Courier_Experience_yrs'))
+    ).alias('Courier_Experience_yrs')
 )
+
 
 # ============================================
 # 2. LIMPEZA, PREPARAÇÃO E FEATURE ENGINEERING
 # ============================================
 
-# Converte para Pandas (sklearn precisa)
 df_pd = df.to_pandas()
 print("\n✅ Dados convertidos para Pandas")
 
-# Checa colunas esperadas
 required_cols = [
     'Distance_km', 'Weather', 'Traffic_Level', 'Time_of_Day',
     'Vehicle_Type', 'Preparation_Time_min', 'Courier_Experience_yrs',
@@ -62,11 +60,10 @@ df_pd = df_pd[
 ].copy()
 
 # Feature engineering adicional
-# Evita divisão por zero
 df_pd['distance_per_prep'] = df_pd['Distance_km'] / np.clip(df_pd['Preparation_Time_min'], 1e-6, None)
 df_pd['rush_hour'] = df_pd['Time_of_Day'].isin(['Morning', 'Afternoon']).astype(int)
 
-# Encoding robusto (mapeamento manual com fallback -1 para categorias novas)
+# Encoding robusto
 categorical_cols = ['Weather', 'Traffic_Level', 'Time_of_Day', 'Vehicle_Type']
 category_maps = {}
 for col in categorical_cols:
@@ -75,7 +72,7 @@ for col in categorical_cols:
     category_maps[col] = mapping
     df_pd[f'{col}_encoded'] = df_pd[col].map(mapping).fillna(-1).astype(int)
 
-# Features do modelo (inclui novas features)
+# Features do modelo
 feature_cols = [
     'Distance_km',
     'Weather_encoded',
@@ -140,8 +137,69 @@ print(f"   MAE Teste: {mae_test:.2f} min")
 print(f"   RMSE Teste: {rmse_test:.2f} min")
 print(f"   R² Teste: {r2_test:.3f}")
 
+
+def generate_rule_based_explanation(distance, weather, traffic, time_of_day, 
+                                     vehicle, prep_time, experience, 
+                                     predicted_time, top_factors):
+    """Gera explicação baseada em regras"""
+    
+    explanations = []
+    
+    # Analisa distância
+    if distance > 10:
+        explanations.append(f"a distância de {distance:.1f}km é considerável")
+    elif distance < 3:
+        explanations.append("a distância é curta")
+    
+    # Analisa clima
+    if weather in ['Rainy', 'Stormy', 'Fog']:
+        explanations.append(f"o clima {weather.lower()} reduz a velocidade")
+    
+    # Analisa tráfego
+    if traffic == 'High':
+        explanations.append("o tráfego está pesado")
+    elif traffic == 'Low':
+        explanations.append("o tráfego está leve")
+    
+    # Analisa horário
+    if time_of_day in ['Morning', 'Afternoon']:
+        explanations.append("é horário de rush")
+    
+    # Analisa veículo
+    vehicle_speed = {'Bike': 'lento', 'Scooter': 'moderado', 'Motorcycle': 'rápido'}
+    if vehicle in vehicle_speed:
+        explanations.append(f"o veículo ({vehicle}) é {vehicle_speed[vehicle]}")
+    
+    # Analisa experiência
+    if experience < 2:
+        explanations.append("o entregador tem pouca experiência")
+    elif experience > 7:
+        explanations.append("o entregador é experiente")
+    
+    # Ordena fatores por valor decrescente
+    sorted_factors = sorted(top_factors.items(), key=lambda x: x[1], reverse=True)
+    
+    # Pega os dois fatores mais relevantes
+    if len(sorted_factors) >= 2:
+        factor_text = f" Os fatores mais relevantes são: {sorted_factors[0][0]} ({sorted_factors[0][1]:.0%}) e {sorted_factors[1][0]} ({sorted_factors[1][1]:.0%})."
+    elif len(sorted_factors) == 1:
+        factor_text = f" O fator mais relevante é: {sorted_factors[0][0]} ({sorted_factors[0][1]:.0%})."
+    else:
+        factor_text = ""
+    
+    # Monta explicação final
+    if len(explanations) >= 2:
+        main_explanation = f"O tempo de {predicted_time:.0f} minutos se deve principalmente porque {explanations[0]} e {explanations[1]}."
+    elif len(explanations) == 1:
+        main_explanation = f"O tempo de {predicted_time:.0f} minutos se deve principalmente porque {explanations[0]}."
+    else:
+        main_explanation = f"O tempo estimado é {predicted_time:.0f} minutos considerando as condições normais de entrega."
+    
+    return main_explanation + factor_text
+
+
 # ============================================
-# 4. VISUALIZAÇÕES
+# 4. VISUALIZAÇÕES (CONVERSÃO EXPLÍCITA PARA LISTAS!)
 # ============================================
 
 # Importância das features
@@ -160,53 +218,71 @@ fig_importance = px.bar(
     color_continuous_scale='viridis'
 )
 
-# Predito vs Real
+# Predito vs Real - CONVERSÃO EXPLÍCITA PARA LISTA!
+y_test_list = y_test.values.tolist() if hasattr(y_test, 'values') else list(y_test)
+y_pred_test_list = y_pred_test.tolist() if hasattr(y_pred_test, 'tolist') else list(y_pred_test)
+
+print(f"\n🔍 Debug - y_test: {len(y_test_list)} pontos")
+print(f"🔍 Debug - y_pred_test: {len(y_pred_test_list)} pontos")
+print(f"🔍 Debug - Amostra y_test: {y_test_list[:3]}")
+print(f"🔍 Debug - Amostra y_pred: {y_pred_test_list[:3]}")
+
 fig_pred = go.Figure()
 fig_pred.add_trace(go.Scatter(
-    x=y_test,
-    y=y_pred_test,
+    x=y_test_list,
+    y=y_pred_test_list,
     mode='markers',
-    marker=dict(color='blue', opacity=0.5),
-    name='Predições'
+    marker=dict(color='blue', opacity=0.6, size=8),
+    name='Predições',
+    text=[f'Real: {r:.1f}<br>Pred: {p:.1f}' for r, p in zip(y_test_list, y_pred_test_list)],
+    hovertemplate='%{text}<extra></extra>'
 ))
-min_axis = min(y_test.min(), y_pred_test.min())
-max_axis = max(y_test.max(), y_pred_test.max())
+
+min_axis = min(min(y_test_list), min(y_pred_test_list))
+max_axis = max(max(y_test_list), max(y_pred_test_list))
+
 fig_pred.add_trace(go.Scatter(
     x=[min_axis, max_axis],
     y=[min_axis, max_axis],
     mode='lines',
-    line=dict(color='red', dash='dash'),
+    line=dict(color='red', dash='dash', width=2),
     name='Linha Ideal'
 ))
 fig_pred.update_layout(
-    title='🎯 Tempo Predito vs Real',
+    title=f'🎯 Tempo Predito vs Real ({len(y_test_list)} pontos)',
     xaxis_title='Tempo Real (min)',
-    yaxis_title='Tempo Predito (min)'
+    yaxis_title='Tempo Predito (min)',
+    height=500,
+    showlegend=True
 )
 
+# Distribuição dos erros - CONVERSÃO EXPLÍCITA E CRIAÇÃO DO DATAFRAME!
+errors = (np.array(y_test_list) - np.array(y_pred_test_list)).tolist()
+print(f"🔍 Debug - Erros: {len(errors)} valores, amostra: {errors[:3]}")
 
-# Distribuição dos erros
-errors = y_test - y_pred_test
+# CORREÇÃO: Criar DataFrame para o histograma
+errors_df = pd.DataFrame({'Erro': errors})
+
 fig_errors = px.histogram(
-    x=errors,
+    errors_df,
+    x='Erro',
     nbins=50,
-    title='📉 Distribuição dos Erros de Predição',
-    labels={'x': 'Erro (min)', 'y': 'Frequência'}
+    title=f'📉 Distribuição dos Erros de Predição (n={len(errors)})',
+    labels={'Erro': 'Erro (min)', 'count': 'Frequência'}
 )
-fig_errors.update_traces(marker_color='indianred')
-
+fig_errors.update_traces(marker_color='indianred', marker_line_color='darkred', marker_line_width=1)
+fig_errors.update_layout(height=500)
 
 # ============================================
 # 5. INTERFACE GRADIO
 # ============================================
 
 def safe_encode(value, mapping):
-    # Retorna -1 para categorias não vistas
     return mapping.get(value, -1)
 
 def predict_delivery_time(distance, weather, traffic, time_of_day,
                           vehicle, prep_time, experience):
-    """Função de predição para o Gradio"""
+    """Função de predição para o Gradio com explicação inteligente"""
 
     # Cria features derivadas
     distance_per_prep = distance / max(prep_time, 1e-6)
@@ -233,17 +309,38 @@ def predict_delivery_time(distance, weather, traffic, time_of_day,
 
     # Predição
     prediction = float(model.predict(features)[0])
+    
+    # Calcula importância relativa das features para ESTA predição
+    feature_values = {
+        'Distância': min(distance / 20.0, 1.0),
+        'Clima': 1.0 if weather in ['Rainy', 'Stormy', 'Fog'] else 0.3,
+        'Tráfego': {'Low': 0.2, 'Medium': 0.5, 'High': 1.0}.get(traffic, 0.5),
+        'Horário': 1.0 if time_of_day in ['Morning', 'Afternoon'] else 0.3,
+        'Veículo': {'Bike': 0.3, 'Scooter': 0.6, 'Motorcycle': 1.0}.get(vehicle, 0.5),
+        'Tempo de preparo': min(prep_time / 60.0, 1.0),
+        'Experiência': max(0, 1.0 - (experience / 15.0))
+    }
+    
+    # GERA EXPLICAÇÃO (Baseada em regras)
+    explanation = generate_rule_based_explanation(
+        distance, weather, traffic, time_of_day,
+        vehicle, prep_time, experience,
+        prediction, feature_values
+    )
 
-    # "Faixa de confiança" simples baseada no MAE (não é IC 95%)
+    # Faixa de confiança
     lower_bound = max(0.0, prediction - mae_test)
     upper_bound = prediction + mae_test
 
+    # CORREÇÃO: Adicionar a explicação ao resultado
     result = f"""
 ⏱️ **Tempo Estimado de Entrega:** {prediction:.1f} minutos
 
-📊 **Faixa baseada no MAE:** {lower_bound:.1f} - {upper_bound:.1f} min
+📊 **Faixa de Confiança:** {lower_bound:.1f} - {upper_bound:.1f} min
 
-🎯 **MAE no Teste:** ±{mae_test:.1f} min | **R²:** {r2_test:.3f}
+💡 **Explicação:** {explanation}
+
+🎯 **Métricas do Modelo:** MAE ±{mae_test:.1f} min | R² {r2_test:.3f}
 """
     return result
 
@@ -253,7 +350,6 @@ traffic_options = sorted(df_pd['Traffic_Level'].dropna().unique().tolist())
 time_options = sorted(df_pd['Time_of_Day'].dropna().unique().tolist())
 vehicle_options = sorted(df_pd['Vehicle_Type'].dropna().unique().tolist())
 
-# Valores padrão seguros
 default_weather = weather_options[0] if weather_options else ""
 default_traffic = traffic_options[0] if traffic_options else ""
 default_time = time_options[0] if time_options else ""
@@ -263,7 +359,7 @@ default_vehicle = vehicle_options[0] if vehicle_options else ""
 with gr.Blocks(theme="soft", title="🍕 Delivery Time Predictor") as interface:
     
     gr.Markdown("# 🍕 Sistema de Previsão de Tempo de Entrega")
-    gr.Markdown("### Preveja o tempo de entrega com base em múltiplos fatores")
+    gr.Markdown("### Preveja o tempo de entrega do seu pedido")
     
     with gr.Tab("🎯 Predição"):
         with gr.Row():
@@ -292,9 +388,9 @@ with gr.Blocks(theme="soft", title="🍕 Delivery Time Predictor") as interface:
         gr.Markdown("#### 💡 Exemplos:")
         gr.Examples(
             examples=[
-                [5.0, default_weather or "Clear", "High", "Afternoon", "Bike", 15, 3],
+                [5.0, default_weather, "High", "Afternoon", "Bike", 15, 3],
                 [12.5, "Rainy", "High", "Night", "Scooter", 20, 5],
-                [3.2, "Clear", "Low", "Morning", "Bike", 10, 7]
+                [3.2, "Clear", "Low", "Morning", "Motorcycle", 10, 7]
             ],
             inputs=[distance, weather, traffic, time_of_day, vehicle, prep_time, experience],
             outputs=output,
@@ -310,10 +406,6 @@ with gr.Blocks(theme="soft", title="🍕 Delivery Time Predictor") as interface:
         gr.Markdown("### 🔍 Comparação entre valores preditos e reais")
         gr.Plot(fig_pred)
     
-    with gr.Tab("📉 Distribuição dos Erros"):
-        gr.Markdown("### 📊 Análise dos erros de predição")
-        gr.Plot(fig_errors)
-    
     with gr.Tab("ℹ️ Métricas do Modelo"):
         gr.Markdown(f"""
         ### 📈 Desempenho do Modelo
@@ -324,27 +416,21 @@ with gr.Blocks(theme="soft", title="🍕 Delivery Time Predictor") as interface:
         | **MAE Teste** | {mae_test:.2f} min |
         | **RMSE Teste** | {rmse_test:.2f} min |
         | **R² Score** | {r2_test:.3f} |
-        | **Registros (após limpeza)** | {len(df_pd)} entregas |
-        | **CV MAE Médio** | {-cv_scores.mean():.2f} ± {cv_scores.std():.2f} min |
+        | **Registros** | {len(df_pd)} entregas |
+        | **CV MAE** | {-cv_scores.mean():.2f} ± {cv_scores.std():.2f} min |
         
         ---
         
-        ### 🔧 Configuração do Modelo
+        ### 🔧 Configuração
         
         - **Algoritmo:** XGBoost Regressor
-        - **N° Estimadores:** 150
-        - **Max Depth:** 5
-        - **Learning Rate:** 0.05
         - **Features:** {len(feature_cols)}
-        
+
         ---
         
-        ### 📝 Features Utilizadas
-        
-        {', '.join(feature_cols)}
+        ### 📝 Features: {', '.join(feature_cols)}
         """)
 
-# Lança a interface
 interface.launch(share=True, debug=True)
 
 # ============================================
