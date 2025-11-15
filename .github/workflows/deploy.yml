@@ -1,0 +1,50 @@
+name: Deploy to Hugging Face Spaces
+
+on:
+  push:
+    branches: [ main ] # Ativa no push para a branch main
+
+jobs:
+  deploy-to-hf-space:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 1. Checkout do Repositório
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Necessário para o push
+          lfs: true      # Habilita Git LFS (bom para o .pkl)
+
+      # (Opcional, mas recomendado) Adicionar Lint (ruff)
+      - name: 2. Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      - name: 3. Install Ruff
+        run: pip install ruff
+
+      - name: 4. Run Ruff Linter
+        run: ruff check . --output-format=github
+        
+      # (Opcional) Adicionar Testes (se você os criar)
+      # - name: 5. Run Pytest
+      #   run: pytest
+
+      - name: 6. Push para o Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }} # Carrega o token do segredo
+        run: |
+          # 1. Configura o git
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+          
+          # 2. Adiciona o repositório do HF Space como 'remote'
+          git remote add space https://dummy:${HF_TOKEN}@huggingface.co/spaces/leo-bsb/Delivery-Time-Predictor
+          
+          # 3. Força o push da branch 'main' para o HF
+          #    Isso sincroniza os repositórios.
+          echo "🚀 Sincronizando código com o Hugging Face Space..."
+          git push --force space main
+          
+          echo "✅ Deploy concluído. O Hugging Face começará o build."
