@@ -27,9 +27,6 @@ jobs:
       - name: Materializa arquivos LFS (IMPORTANTE)
         run: git lfs checkout
 
-      - name: Upload model to HF
-        run: python upload_model.py
-
 
       - name: Install dependencies
         run: pip install -r requirements.txt
