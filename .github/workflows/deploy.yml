@@ -9,12 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      # 1. Checkout do Repositório (com LFS)
+      # 1. Checkout (com LFS)
       - name: 1. Checkout do Repositório
         uses: actions/checkout@v4
         with:
           lfs: true      # <-- Essencial para baixar o .pkl
-          fetch-depth: 0 # Necessário para o checkout completo
+          fetch-depth: 0 
 
       # 2. Set up Python (para o Ruff)
       - name: 2. Set up Python
@@ -30,12 +30,12 @@ jobs:
       - name: 4. Run Ruff Linter
         run: ruff check . --output-format=github
         
-      # 5. Push para o Hugging Face Space (O NOVO MÉTODO OFICIAL)
-      # Esta action cuida de tudo: LFS, tokens, e o push.
+      # 5. Push para o Hugging Face (O MÉTODO CORRETO)
+      # Esta é a action oficial e com o nome correto.
       - name: 5. Push para o Hugging Face Space
-        uses: huggingface/push-to-hub@v0
+        uses: huggingface/hub-action@v1 # <-- NOME CORRETO
         with:
-          hf_token: ${{ secrets.HF_TOKEN }}
-          repo_id: leo-bsb/Delivery-Time-Predictor
+          token: ${{ secrets.HF_TOKEN }}
+          repository: leo-bsb/Delivery-Time-Predictor
           repo_type: space
-          force: true # Força o push para sincronizar com a branch main
+          commit_message: "Deploy to Space from GitHub Actions"
