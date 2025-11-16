@@ -33,7 +33,7 @@ jobs:
       # 5. Push para o Hugging Face Space (O NOVO MÉTODO OFICIAL)
       # Esta action cuida de tudo: LFS, tokens, e o push.
       - name: 5. Push para o Hugging Face Space
-        uses: huggingface_hub/push-to-hub@v0.1
+        uses: huggingface/push-to-hub@v0.1
         with:
           hf_token: ${{ secrets.HF_TOKEN }}
           repo_id: leo-bsb/Delivery-Time-Predictor
