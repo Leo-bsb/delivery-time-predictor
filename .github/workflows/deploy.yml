@@ -32,7 +32,7 @@ jobs:
         
       # 5. Push para o Hugging Face (VERSÃO CORRETA)
       - name: 5. Push para o Hugging Face Space
-        uses: huggingface/hub-action@v0 # <-- VERSÃO CORRIGIDA
+        uses: huggingface/hub-action@v2.0
         with:
           hf_token: ${{ secrets.HF_TOKEN }} # Parâmetro corrigido
           repository: leo-bsb/Delivery-Time-Predictor
