@@ -15,4 +15,3 @@ pydantic==1.10.12            # Pydantic 2.x exige 3.11+, usar 1.x no 3.10
 typing-extensions==4.5.0     # Compatível com 3.10
 python-dotenv==1.0.0         # Versão estável e simples
 requests==2.31.0             # Estável com 3.10
-huggingface-hub==0.14.1      # Versão estável antes das últimas atualizações
