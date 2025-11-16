@@ -15,6 +15,13 @@ jobs:
           lfs: true
           fetch-depth: 0 # <-- Adicione esta linha
 
+      - name: Install Xet
+              run: |
+                curl -L https://github.com/xetdata/xet-tools/releases/latest/download/git-xet-linux-x86_64 -o git-xet
+                chmod +x git-xet
+                sudo mv git-xet /usr/local/bin/
+                git xet login --token ${{ secrets.HF_TOKEN }} # Tenta logar automaticamente
+
       - name: Push to Hugging Face
         run: |
           # Adiciona o repositório do Hugging Face como um "remote"
