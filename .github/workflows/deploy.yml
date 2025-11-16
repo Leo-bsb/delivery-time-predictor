@@ -12,7 +12,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          lfs: true # Isso já baixa os arquivos do LFS automaticamente
+          lfs: true
+          fetch-depth: 0 # <-- Adicione esta linha
 
       - name: Push to Hugging Face
         run: |
