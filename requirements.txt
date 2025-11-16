@@ -1,6 +1,5 @@
 fastapi==0.121.1
 uvicorn==0.38.0
-gradio==5.49.1
 pandas==2.3.3
 numpy==1.26.4
 polars==0.17.9
