@@ -8,30 +8,33 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      # 1. Checkout (com LFS)
-      - name: 1. Checkout do Repositório
+      # 1. Checkout (SÓ PONTEIROS LFS)
+      # Nós NÃO queremos o .pkl real ainda.
+      - name: 1. Checkout do Repositório (sem LFS)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          lfs: true # <-- Perfeito, baixa o .pkl
+          lfs: false # <-- MUDANÇA CRÍTICA: NÃO baixa o .pkl
 
       # 2. Instala o Git LFS no Runner
-      #    Esta é a peça que faltava no seu novo script.
       - name: 2. Instala o Git LFS no Runner
         run: |
           sudo apt-get update
           sudo apt-get install git-lfs
           git lfs install
 
-      # 3. Push para o Hugging Face Space
-      #    O runner agora entende LFS e o push será aceito.
-      - name: 3. Push para o Hugging Face Space
+      # 3. Baixa os arquivos LFS manualmente
+      # Agora o runner baixa o .pkl usando o software LFS.
+      # Ele sabe que é um arquivo LFS, não um binário comum.
+      - name: 3. Baixa os arquivos LFS (git lfs fetch)
+        run: git lfs fetch --all
+
+      # 4. Push para o Hugging Face Space
+      # Agora o 'push' tem o software LFS E o arquivo .pkl.
+      # Ele fará o 'push' LFS corretamente.
+      - name: 4. Push para o Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # Adiciona o repo do HF como um 'remote' chamado 'space'
           git remote add space https://leo-bsb:$HF_TOKEN@huggingface.co/spaces/leo-bsb/Delivery-Time-Predictor
-          
-          # Força o push da branch 'main' para o 'remote' chamado 'space'
-          # O --force garante a sincronização total
           git push space main --force
