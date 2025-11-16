@@ -161,7 +161,6 @@ tqdm==4.67.1
 traitlets==5.14.3
 transformers==4.57.1
 translator==0.0.9
-triton==3.5.0
 typer==0.20.0
 typer-slim==0.20.0
 typing-inspection==0.4.2
