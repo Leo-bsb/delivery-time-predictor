@@ -26,19 +26,15 @@ jobs:
           git config --global user.email "ci@example.com"
           git config --global user.name "github-actions"
 
-      - name: Clone HF Space Repo
-        run: |
-          git clone https://huggingface.co/spaces/leo-bsb/Delivery-Time-Predictor hf_space
-          ls -la hf_space
 
       - name: Copy project files into HF space
         run: |
-          cp -r api frontend ui run.sh Dockerfile requirements.txt README.md .gitattributes hf_space/
+          cp -r api frontend ui run.sh Dockerfile requirements.txt README.md .gitattributes
           # Ajuste aqui dependendo dos arquivos do seu projeto real
 
       - name: Commit & Push to HF
         run: |
-          cd hf_space
+
           git add .
           git commit -m "Sync project from GitHub Actions" || echo "No changes to commit"
           git push https://leo-bsb:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/leo-bsb/Delivery-Time-Predictor main
