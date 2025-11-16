@@ -1,5 +1,5 @@
 #Cache Update
-FROM python:3.11-slim
+FROM python:3.12.3
 
 WORKDIR /app
 
