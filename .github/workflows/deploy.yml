@@ -12,18 +12,36 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          lfs: true
-          fetch-depth: 0 # <-- Adicione esta linha
+          lfs: true # Ainda é bom ter para o checkout do GitHub
+          fetch-depth: 0 # Evita erros de "shallow clone"
 
-      - name: Install Xet
-        run: |
-          curl -L https://github.com/xetdata/xet-tools/releases/latest/download/git-xet-linux-x86_64 -o git-xet
-          chmod +x git-xet
-          sudo mv git-xet /usr/local/bin/
-          git xet login --token ${{ secrets.HF_TOKEN }} # Tenta logar automaticamente
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
-      - name: Push to Hugging Face
+      - name: Install Dependencies (hf_xet, hf_hub, e do projeto)
         run: |
-          # Adiciona o repositório do Hugging Face como um "remote"
-          # Estamos usando 'HEAD:main' para forçar o push do commit atual para a branch 'main' do HF
-          git push https://leo-bsb:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/leo-bsb/Delivery-Time-Predictor HEAD:main --force
+          pip install --upgrade pip
+          # Instala as bibliotecas de deploy e as do seu projeto
+          pip install huggingface_hub hf_xet
+          pip install -r requirements.txt
+
+      - name: Upload project to Hugging Face Space
+        env:
+          # O token é passado como variável de ambiente
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python -c "
+          from huggingface_hub import HfApi
+          api = HfApi()
+          
+          print('Uploading files to Hugging Face Space...')
+          api.upload_folder(
+              folder_path='.', # Envia o diretório atual
+              repo_id='leo-bsb/Delivery-Time-Predictor',
+              repo_type='space',
+              commit_message='Sync project from GitHub Actions'
+          )
+          print('Upload complete.')
+          "
