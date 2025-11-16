@@ -1,23 +1,27 @@
-# 1. Imagem base
-FROM python:3.10-slim
+# 1. Imagem base — mais estável para libs científicas
+FROM python:3.10
 
-# 2. Define o diretório de trabalho
+# 2. Diretório de trabalho
 WORKDIR /app
 
-# 3. Copia e instala as dependências
-# (Copiamos o requirements.txt primeiro para aproveitar o cache do Docker)
+# 3. Instala dependências de sistema (essencial para numpy/xgboost/pandas)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# 4. Copia requirements e instala
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 4. Copia todo o código do projeto para dentro do container
+# 5. Copia os arquivos do projeto (exceto ignorados no .dockerignore)
 COPY . .
 
-# 5. Torna o script de inicialização executável
+# 6. Garante que o script está executável
 RUN chmod +x ./run.sh
 
-# 6. Define a porta que o container vai expor
-# O FastAPI rodará na 8000, o Gradio na 7860
-EXPOSE 8000 7860
+# 7. Exponha apenas a porta da API
+EXPOSE 8000
 
-# 7. Comando para iniciar o container
+# 8. Comando de inicialização
 CMD ["./run.sh"]
