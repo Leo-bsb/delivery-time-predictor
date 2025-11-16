@@ -7,34 +7,27 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+
     steps:
-      # 1. Checkout (SÓ PONTEIROS LFS)
-      # Nós NÃO queremos o .pkl real ainda.
-      - name: 1. Checkout do Repositório (sem LFS)
+      - name: Checkout do repositório (sem baixar LFS)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          lfs: false # <-- MUDANÇA CRÍTICA: NÃO baixa o .pkl
+          lfs: false
 
-      # 2. Instala o Git LFS no Runner
-      - name: 2. Instala o Git LFS no Runner
+      - name: Instala Git LFS
         run: |
           sudo apt-get update
-          sudo apt-get install git-lfs
+          sudo apt-get install -y git-lfs
           git lfs install
 
-      # 3. Baixa os arquivos LFS manualmente
-      # Agora o runner baixa o .pkl usando o software LFS.
-      # Ele sabe que é um arquivo LFS, não um binário comum.
-      - name: 3. Baixa os arquivos LFS (git lfs fetch)
+      - name: Baixa arquivos LFS
         run: git lfs fetch --all
 
-      # 4. Push para o Hugging Face Space
-      # Agora o 'push' tem o software LFS E o arquivo .pkl.
-      # Ele fará o 'push' LFS corretamente.
-      - name: 4. Push para o Hugging Face Space
+      - name: Materializa arquivos LFS (IMPORTANTE)
+        run: git lfs checkout
+
+      - name: Upload model to HF
+        run: python upload_model.py
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          git remote add space https://leo-bsb:$HF_TOKEN@huggingface.co/spaces/leo-bsb/Delivery-Time-Predictor
-          git push space main --force
