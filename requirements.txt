@@ -11,3 +11,4 @@ scikit-learn
 gradio
 requests
 plotly
+huggingface_hub
