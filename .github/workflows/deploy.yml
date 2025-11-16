@@ -12,29 +12,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          lfs: true
+          lfs: true # Isso já baixa os arquivos do LFS automaticamente
 
-      - name: Install Git LFS
+      - name: Push to Hugging Face
         run: |
-          sudo apt-get update
-          sudo apt-get install git-lfs
-          git lfs install
-          git lfs pull
-
-      - name: Configure Git for HF
-        run: |
-          git config --global user.email "ci@example.com"
-          git config --global user.name "github-actions"
-
-
-##      - name: Copy project files into HF space
-##        run: |
-##          cp -r api frontend ui run.sh Dockerfile requirements.txt README.md .gitattributes 
-          # Ajuste aqui dependendo dos arquivos do seu projeto real
-
-      - name: Commit & Push to HF
-        run: |
-
-          git add .
-          git commit -m "Sync project from GitHub Actions" || echo "No changes to commit"
-          git push https://leo-bsb:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/leo-bsb/Delivery-Time-Predictor main
+          # Adiciona o repositório do Hugging Face como um "remote"
+          # Estamos usando 'HEAD:main' para forçar o push do commit atual para a branch 'main' do HF
+          git push https://leo-bsb:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/leo-bsb/Delivery-Time-Predictor HEAD:main --force

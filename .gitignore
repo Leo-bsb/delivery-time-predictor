@@ -1,7 +1,3 @@
-delivery_model.pkl
 Food_Delivery_Times.csv
-*.pyc
 *.tar.gz
 __pycache__/
-delivery_model.pkl
-*.pkl
