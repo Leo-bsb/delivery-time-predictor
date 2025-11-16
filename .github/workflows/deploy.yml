@@ -12,10 +12,9 @@ jobs:
       - name: 1. Checkout do Repositório
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Necessário para o push
-          lfs: true      # Habilita Git LFS (bom para o .pkl)
+          fetch-depth: 0 
+          lfs: true      # <-- Importante: baixa os arquivos LFS
 
-      # (Opcional, mas recomendado) Adicionar Lint (ruff)
       - name: 2. Set up Python
         uses: actions/setup-python@v5
         with:
@@ -27,13 +26,19 @@ jobs:
       - name: 4. Run Ruff Linter
         run: ruff check . --output-format=github
         
-      # (Opcional) Adicionar Testes (se você os criar)
-      # - name: 5. Run Pytest
-      #   run: pytest
+      # ==========================================================
+      # ETAPA NOVA E MAIS IMPORTANTE!
+      # ==========================================================
+      - name: 5. Instala o Git LFS no Runner
+        run: |
+          sudo apt-get update
+          sudo apt-get install git-lfs
+          git lfs install
+      # ==========================================================
 
       - name: 6. Push para o Hugging Face Space
         env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }} # Carrega o token do segredo
+          HF_TOKEN: ${{ secrets.HF_TOKEN }} 
         run: |
           # 1. Configura o git
           git config --global user.email "github-actions@github.com"
@@ -43,7 +48,7 @@ jobs:
           git remote add space https://dummy:${HF_TOKEN}@huggingface.co/spaces/leo-bsb/Delivery-Time-Predictor
           
           # 3. Força o push da branch 'main' para o HF
-          #    Isso sincroniza os repositórios.
+          #    O runner agora tem LFS e este comando vai funcionar!
           echo "🚀 Sincronizando código com o Hugging Face Space..."
           git push --force space main
           
