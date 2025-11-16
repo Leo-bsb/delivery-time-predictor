@@ -1,16 +1,18 @@
-fastapi==0.121.1
-uvicorn==0.38.0
-pandas==2.3.3
-numpy==1.26.4
-polars==0.17.9
-xgboost==3.1.1
-scikit-learn==1.7.2
-scipy==1.16.3
-plotly==6.4.0
-matplotlib==3.10.7
-torch==2.9.1
-pydantic==2.11.10
-typing-extensions==4.15.0
-python-dotenv==1.2.1
-requests==2.32.5
-huggingface-hub==0.16.4  # (ou última versão estável)
+fastapi==0.95.2               # Compatível com 3.10, última antes de 0.121.1 que pode exigir 3.11
+uvicorn==0.22.0              # Estável para 3.10
+gradio==3.39.0               # Versão antes das últimas grandes mudanças (5.x é para Python 3.11+)
+pandas==1.5.3                # Compatível e estável em 3.10
+numpy==1.23.5                # Última compatível garantida para 3.10
+polars==0.16.12              # Evitar 0.17.x, menos testado em 3.10
+xgboost==1.7.6               # Versão estável para 3.10
+scikit-learn==1.2.2          # Compatível com 3.10
+scipy==1.10.1                # Compatível e estável em 3.10
+plotly==5.15.0               # Evitar 6.x para 3.10
+matplotlib==3.7.1            # Compatível com 3.10
+torch==2.0.1                 # Versão estável para 3.10 (2.9.x pode ser mais restrita)
+transformers==4.29.2         # Estável para 3.10, antes das últimas grandes versões
+pydantic==1.10.12            # Pydantic 2.x exige 3.11+, usar 1.x no 3.10
+typing-extensions==4.5.0     # Compatível com 3.10
+python-dotenv==1.0.0         # Versão estável e simples
+requests==2.31.0             # Estável com 3.10
+huggingface-hub==0.14.1      # Versão estável antes das últimas atualizações
