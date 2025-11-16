@@ -29,5 +29,13 @@ jobs:
 
       - name: Upload model to HF
         run: python upload_model.py
+
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+
+      - name: Upload model to HF
+        run: python upload_model.py
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
