@@ -1,38 +1,44 @@
-name: Sync to Hugging Face Space
+name: Deploy to HuggingFace Space
 
 on:
   push:
     branches: [main]
 
 jobs:
-  sync:
+  deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout do repositório (sem baixar LFS)
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-          lfs: false
+          lfs: true
 
-      - name: Instala Git LFS
+      - name: Install Git LFS
         run: |
           sudo apt-get update
-          sudo apt-get install -y git-lfs
+          sudo apt-get install git-lfs
           git lfs install
+          git lfs pull
 
-      - name: Baixa arquivos LFS
-        run: git lfs fetch --all
+      - name: Configure Git for HF
+        run: |
+          git config --global user.email "ci@example.com"
+          git config --global user.name "github-actions"
 
-      - name: Materializa arquivos LFS (IMPORTANTE)
-        run: git lfs checkout
+      - name: Clone HF Space Repo
+        run: |
+          git clone https://huggingface.co/spaces/leo-bsb/Delivery-Time-Predictor hf_space
+          ls -la hf_space
 
+      - name: Copy project files into HF space
+        run: |
+          cp -r api frontend app.py dockerfile requirements.txt .gitattributes README.md delivery_model.pkl hf_space/
+          # Ajuste aqui dependendo dos arquivos do seu projeto real
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-
-      - name: Upload model to HF
-        run: python upload_model.py
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      - name: Commit & Push to HF
+        run: |
+          cd hf_space
+          git add .
+          git commit -m "Sync project from GitHub Actions" || echo "No changes to commit"
+          git push https://leo-bsb:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/leo-bsb/Delivery-Time-Predictor main
