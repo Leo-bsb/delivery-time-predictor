@@ -29,7 +29,7 @@ jobs:
 
       - name: Copy project files into HF space
         run: |
-          cp -r api frontend ui run.sh Dockerfile requirements.txt README.md .gitattributes
+          cp -r api frontend ui run.sh Dockerfile requirements.txt README.md .gitattributes .
           # Ajuste aqui dependendo dos arquivos do seu projeto real
 
       - name: Commit & Push to HF
