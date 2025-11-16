@@ -2,7 +2,7 @@ name: Deploy to Hugging Face Spaces
 
 on:
   push:
-    branches: [ main ] # Ativa no push para a branch main
+    branches: [ main ]
 
 jobs:
   deploy-to-hf-space:
@@ -13,7 +13,7 @@ jobs:
       - name: 1. Checkout do Repositório
         uses: actions/checkout@v4
         with:
-          lfs: true      # <-- Essencial para baixar o .pkl
+          lfs: true
           fetch-depth: 0 
 
       # 2. Set up Python (para o Ruff)
@@ -30,12 +30,12 @@ jobs:
       - name: 4. Run Ruff Linter
         run: ruff check . --output-format=github
         
-      # 5. Push para o Hugging Face (O MÉTODO CORRETO)
-      # Esta é a action oficial e com o nome correto.
+      # 5. Push para o Hugging Face (VERSÃO CORRETA)
       - name: 5. Push para o Hugging Face Space
-        uses: huggingface/hub-action@v1 # <-- NOME CORRETO
+        uses: huggingface/hub-action@v0 # <-- VERSÃO CORRIGIDA
         with:
-          token: ${{ secrets.HF_TOKEN }}
+          hf_token: ${{ secrets.HF_TOKEN }} # Parâmetro corrigido
           repository: leo-bsb/Delivery-Time-Predictor
           repo_type: space
           commit_message: "Deploy to Space from GitHub Actions"
+          force: true # Adicionado para garantir a sincronização
