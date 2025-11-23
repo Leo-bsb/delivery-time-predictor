@@ -1,6 +1,6 @@
 fastapi==0.95.2               # Compatível com 3.10, última antes de 0.121.1 que pode exigir 3.11
 uvicorn==0.22.0              # Estável para 3.10
-gradio==3.39.0               # Versão antes das últimas grandes mudanças (5.x é para Python 3.11+)
+gradio==4.44.1
 pandas==1.5.3                # Compatível e estável em 3.10
 numpy==1.23.5                # Última compatível garantida para 3.10
 polars==0.16.12              # Evitar 0.17.x, menos testado em 3.10
